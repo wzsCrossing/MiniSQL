@@ -56,9 +56,9 @@ page_id_t DiskManager::AllocatePage() {
 	DiskFileMetaPage *meta_page = reinterpret_cast<DiskFileMetaPage *>(meta_data_);
 
 	uint32_t MAX_VALID_EXTENT_ID = (PAGE_SIZE - 8) / 4;
-	uint32_t extent_id = meta_page->num_extents_;
-	for (int i = 0; i < meta_page->num_extents_; i++) {
-		if (meta_page->extent_used_page_[i] < BITMAP_SIZE) {
+	uint32_t extent_id = meta_page->GetExtentNums();
+	for (uint32_t i = 0; i < meta_page->GetExtentNums(); i++) {
+		if (meta_page->GetExtentUsedPage(i) < BITMAP_SIZE) {
 			extent_id = i;
 			break;
 		}
@@ -67,9 +67,9 @@ page_id_t DiskManager::AllocatePage() {
   		return INVALID_PAGE_ID;
 	}
 
-  // std::cout << extent_id << ' ' << meta_page->extent_used_page_[extent_id] << std::endl;
+  // std::cout << GetFileSize(file_name_) << std::endl;
 	char bitmap_data[PAGE_SIZE];
-	ReadPhysicalPage(extent_id * (BITMAP_SIZE + 1) + 1, bitmap_data);
+	ReadPhysicalPage(1, bitmap_data);
 	BitmapPage<PAGE_SIZE> *bitmap = reinterpret_cast<BitmapPage<PAGE_SIZE> *>(bitmap_data);
 
 	uint32_t page_id;
@@ -78,7 +78,7 @@ page_id_t DiskManager::AllocatePage() {
 
 		meta_page->num_allocated_pages_++;
 		meta_page->extent_used_page_[extent_id]++;
-		if (extent_id == meta_page->num_extents_) {
+		if (extent_id == meta_page->GetExtentNums()) {
 			meta_page->num_extents_++;
 		}
 
@@ -106,9 +106,6 @@ void DiskManager::DeAllocatePage(page_id_t logical_page_id) {
 		while (meta_page->num_extents_ > 0 && meta_page->extent_used_page_[meta_page->num_extents_ - 1] == 0) {
 			meta_page->num_extents_--;
 		}
-
-		char *tmp = reinterpret_cast<char *>(meta_page);
-		memcpy(meta_data_, tmp, PAGE_SIZE);
 	}
 }
 
