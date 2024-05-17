@@ -67,9 +67,8 @@ page_id_t DiskManager::AllocatePage() {
   		return INVALID_PAGE_ID;
 	}
 
-  // std::cout << GetFileSize(file_name_) << std::endl;
 	char bitmap_data[PAGE_SIZE];
-	ReadPhysicalPage(1, bitmap_data);
+	ReadPhysicalPage(extent_id * (BITMAP_SIZE + 1) + 1, bitmap_data);
 	BitmapPage<PAGE_SIZE> *bitmap = reinterpret_cast<BitmapPage<PAGE_SIZE> *>(bitmap_data);
 
 	uint32_t page_id;
