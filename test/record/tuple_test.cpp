@@ -100,4 +100,74 @@ TEST(TupleTest, RowTest) {
   }
   ASSERT_TRUE(table_page.MarkDelete(row.GetRowId(), nullptr, nullptr, nullptr));
   table_page.ApplyDelete(row.GetRowId(), nullptr, nullptr);
+  row2.destroy();
+}
+
+TEST(TupleTest, ColumnTest) {
+  std::vector<Column *> columns = {new Column("sid", TypeId::kTypeInt, 0, false, false),
+                                   new Column("cid", TypeId::kTypeInt, 1, false, true),
+                                   new Column("name", TypeId::kTypeChar, 64, 2, true, false),
+                                   new Column("city", TypeId::kTypeChar, 10, 3, false, false),
+                                   new Column("account", TypeId::kTypeFloat, 4, true, false),
+                                   new Column("price", TypeId::kTypeFloat, 5, false, false)};
+  char buffer[PAGE_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+  // Serialize phase
+  char *p = buffer;
+  for (int i = 0; i < (int)columns.size(); i++) {
+    p += columns[i]->SerializeTo(p);
+  }
+  // Deserialize phase
+  uint32_t ofs = 0;
+  Column *df = nullptr;
+  for (int i = 0; i < (int)columns.size(); i++) {
+    uint32_t offset = Column::DeserializeFrom(buffer + ofs, df);
+    EXPECT_EQ(columns[i]->GetSerializedSize(), offset);
+    EXPECT_EQ(columns[i]->GetName(), df->GetName());
+    EXPECT_EQ(columns[i]->GetType(), df->GetType());
+    EXPECT_EQ(columns[i]->GetLength(), df->GetLength());
+    EXPECT_EQ(columns[i]->GetTableInd(), df->GetTableInd());
+    EXPECT_EQ(columns[i]->IsNullable(), df->IsNullable());
+    EXPECT_EQ(columns[i]->IsUnique(), df->IsUnique());
+    ofs += offset;
+    delete df;
+    df = nullptr;
+  }
+  for (auto column : columns) {
+    delete column;
+  }
+}
+
+TEST(TupleTest, SchemaTest) {
+  std::vector<Column *> columns = {new Column("sid", TypeId::kTypeInt, 0, false, false),
+                                   new Column("cid", TypeId::kTypeInt, 1, false, true),
+                                   new Column("name", TypeId::kTypeChar, 64, 2, true, false),
+                                   new Column("city", TypeId::kTypeChar, 10, 3, false, false),
+                                   new Column("account", TypeId::kTypeFloat, 4, true, false),
+                                   new Column("price", TypeId::kTypeFloat, 5, false, false)};
+  char buffer[PAGE_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+
+  Schema *schema1 = new Schema(columns);
+  uint32_t offset1 = schema1->SerializeTo(buffer);
+  Schema *schema2 = nullptr;
+  uint32_t offset2 = Schema::DeserializeFrom(buffer, schema2);
+
+  EXPECT_EQ(offset1, offset2);
+  EXPECT_EQ(schema1->GetColumnCount(), schema2->GetColumnCount());
+  
+  std::vector<Column *> columns_1_ = schema1->GetColumns();
+  std::vector<Column *> columns_2_ = schema2->GetColumns();
+  for (int i = 0; i < (int)columns_1_.size(); i++) {
+    Column *col1 = columns_1_[i];
+    Column *col2 = columns_2_[i];
+    EXPECT_EQ(col1->GetName(), col2->GetName());
+    EXPECT_EQ(col1->GetType(), col2->GetType());
+    EXPECT_EQ(col1->GetLength(), col2->GetLength());
+    EXPECT_EQ(col1->GetTableInd(), col2->GetTableInd());
+    EXPECT_EQ(col1->IsNullable(), col2->IsNullable());
+    EXPECT_EQ(col1->IsUnique(), col2->IsUnique());
+  }
+  delete schema1;
+  delete schema2;
 }
