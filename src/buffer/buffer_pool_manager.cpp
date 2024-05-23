@@ -26,6 +26,9 @@ BufferPoolManager::~BufferPoolManager() {
  * TODO: Student Implement
  */
 Page *BufferPoolManager::FetchPage(page_id_t page_id) {
+	if (page_id == INVALID_PAGE_ID) {
+		return nullptr;
+	}
 	// 1.     Search the page table for the requested page (P).
 	// 1.1    If P exists, pin it and return it immediately.
 	if (page_table_.count(page_id)) {

@@ -10,10 +10,7 @@ uint32_t Row::SerializeTo(char *buf, Schema *schema) const {
 	uint32_t offset = 0;
 	uint32_t ColumnCount = schema->GetColumnCount();
 
-	MACH_WRITE_TO(RowId, buf, GetRowId());
-	offset += sizeof(RowId);
-
-	MACH_WRITE_UINT32(buf + offset, ColumnCount);
+	MACH_WRITE_UINT32(buf, ColumnCount);
 	offset += sizeof(uint32_t);
 
 	int Null_Bitmap_Len_ = (ColumnCount + 7) / 8;
@@ -44,10 +41,7 @@ uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
 	// replace with your code here
 	uint32_t offset = 0;
 
-	SetRowId(MACH_READ_FROM(RowId, buf));
-	offset += sizeof(RowId);
-
-	uint32_t ColumnCount = MACH_READ_UINT32(buf + offset);
+	uint32_t ColumnCount = MACH_READ_UINT32(buf);
 	offset += sizeof(uint32_t);
 
 	int Null_Bitmap_Len_ = (ColumnCount + 7) / 8;
@@ -74,7 +68,7 @@ uint32_t Row::GetSerializedSize(Schema *schema) const {
 	ASSERT(schema->GetColumnCount() == fields_.size(), "Fields size do not match schema's column size.");
 	// replace with your code here
 	uint32_t ColumnCount = schema->GetColumnCount();
-	uint32_t offset = sizeof(RowId) + sizeof(uint32_t) + (ColumnCount + 7) / 8;
+	uint32_t offset = sizeof(uint32_t) + (ColumnCount + 7) / 8;
 
 	for (int i = 0; i < ColumnCount; ++i) {
 		if (!fields_[i]->IsNull()) {
