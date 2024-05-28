@@ -28,7 +28,12 @@ bool LRUReplacer::Victim(frame_id_t *frame_id) {
  */
 void LRUReplacer::Pin(frame_id_t frame_id) {
 	if (page_map_.count(frame_id)) {
-		page_list_.erase(page_map_[frame_id]);
+		for (auto it = page_list_.begin(); it != page_list_.end(); ++it) {
+			if (*it == frame_id) {
+				page_list_.erase(it);
+				break;
+			}
+		}
 		page_map_.erase(frame_id);
 	}
 }
@@ -43,8 +48,7 @@ void LRUReplacer::Unpin(frame_id_t frame_id) {
 
 	if (!page_map_.count(frame_id)) {
 		page_list_.push_back(frame_id);
-		auto it = page_list_.end();
-		page_map_[frame_id] = --it;
+		page_map_[frame_id] = true;
 	}
 }
 
