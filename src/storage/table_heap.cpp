@@ -91,7 +91,7 @@ bool TableHeap::UpdateTuple(Row &row, const RowId &rid, Txn *txn) {
 	} else if (status == 0) {
 		buffer_pool_manager_->UnpinPage(page_id_, false);
 		if (InsertTuple(row, txn)) {
-			ApplyDelete(rid, txn);
+			MarkDelete(rid, txn);
 			return true;
 		}
 	} else {
