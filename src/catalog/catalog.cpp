@@ -73,7 +73,23 @@ CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManag
     if(init==true){
       catalog_meta_=new CatalogMeta();
     }else {
-      Page 
+      Page *metapage=buffer_pool_manager_->FetchPage(META_PAGE_ID);
+      char *buffer=metapage->GetData();
+      catalog_meta_=CatalogMeta::DeserializeFrom(buffer);
+      buffer_pool_manager_->UnpinPage(META_PAGE_ID,false);
+      for(auto it:catalog_meta_->table_meta_pages_){
+        page_id_t table_page_id=it.second;
+        Page *table_page=buffer_pool_manager_->FetchPage(table_page_id);
+        *buffer=table_page->GetData();
+        TableMetadata *tablemetadata;
+        TableMetadata::DeserializeFrom(buffer,tablemetadata);
+        TableHeap *heap=TableHeap::Create(buffer_pool_manager_,tablemetadata->GetFirstPageId(),tablemetadata->GetSchema(),log_manager_,lock_manager_);
+        table_names_[tablemetadata->GetTableName()]=tablemetadata->GetTableId();
+        TableInfo *info=TableInfo::Create();
+        info->Init(tablemetadata,heap);
+        tables_[tablemetadata->GetTableId()]=info;
+        buffer_pool_manager_->UnpinPage(table_page_id);
+      }
     }
 //    ASSERT(false, "Not Implemented yet");
 }
