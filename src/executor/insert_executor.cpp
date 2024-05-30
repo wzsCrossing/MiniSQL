@@ -23,7 +23,7 @@ bool InsertExecutor::Next([[maybe_unused]] Row *row, RowId *rid) {
       Row key_row;
       for (auto info : index_info_) {  // 更新索引
         insert_row.GetKeyFromRow(schema_, info->GetIndexKeySchema(), key_row);
-        info->GetIndex()->InsertEntry(key_row, insert_rid, exec_ctx_->GetTransaction());
+        info->GetIndex()->InsertEntry(key_row, insert_row.GetRowId(), exec_ctx_->GetTransaction());
       }
       return true;
     }
