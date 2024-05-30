@@ -96,7 +96,6 @@ CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManag
         char *buffer2=index_page->GetData();
         IndexMetadata *indexmeta=nullptr;
         
-        cout<<"Ctrate:"<<index_page_id<<endl;
         IndexMetadata::DeserializeFrom(buffer2,indexmeta);
         std::string table_name=tables_[indexmeta->GetTableId()]->GetTableName();
         std::string index_name=indexmeta->GetIndexName();
@@ -180,9 +179,15 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
                                     const std::vector<std::string> &index_keys, Txn *txn, IndexInfo *&index_info,
                                     const string &index_type) {
   if(table_names_.count(table_name)==0)return DB_TABLE_NOT_EXIST;
-  if(index_names_.count(index_name)!=0)return DB_INDEX_ALREADY_EXIST;
+  if(index_names_[table_name].count(index_name)!=0)return DB_INDEX_ALREADY_EXIST;
   TableInfo *table_info=tables_[table_names_[table_name]];
   Schema *schema=table_info->GetSchema();
+  std::vector<uint32_t>key_map;
+  for(auto it:index_keys){
+    uint32_t col_index;
+    if(schema->GetColumnIndex(it,col_index)!=DB_COLUMN_NAME_NOT_EXIST)key_map.push_back(col_index);
+    else return DB_COLUMN_NAME_NOT_EXIST;
+  }
   
   index_id_t index_id=catalog_meta_->GetNextIndexId();
   index_names_[table_name][index_name]=index_id;
@@ -192,16 +197,9 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   buffer_pool_manager_->UnpinPage(page_id,false);
   catalog_meta_->index_meta_pages_.emplace(index_id,page_id);
 
-  std::vector<uint32_t>key_map;
-  for(auto it:index_keys){
-    uint32_t col_index;
-    if(schema->GetColumnIndex(it,col_index)!=DB_COLUMN_NAME_NOT_EXIST)key_map.push_back(col_index);
-    else return DB_COLUMN_NAME_NOT_EXIST;
-  }
   table_id_t table_id=table_names_[table_name];
   IndexMetadata *index_meta=IndexMetadata::Create(index_id,index_name,table_id,key_map);
   char *buffer =new_page_meta->GetData();
-  cout<<"save:"<<page_id<<endl;
   index_meta->SerializeTo(buffer);
 
   index_info=IndexInfo::Create();

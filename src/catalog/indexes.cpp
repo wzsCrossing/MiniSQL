@@ -55,11 +55,9 @@ uint32_t IndexMetadata::DeserializeFrom(char *buf, IndexMetadata *&index_meta) {
   // magic num
   uint32_t magic_num = MACH_READ_UINT32(buf);
   buf += 4;
-  cout<<"err:"<<magic_num<<endl;
-  //ASSERT(magic_num == INDEX_METADATA_MAGIC_NUM, "Failed to deserialize index info.");
+  ASSERT(magic_num == INDEX_METADATA_MAGIC_NUM, "Failed to deserialize index info.");
   // index id
   index_id_t index_id = MACH_READ_FROM(index_id_t, buf);
-  cout<<"id:"<<index_id<<endl;
   buf += 4;
   // index name
   uint32_t len = MACH_READ_UINT32(buf);
