@@ -73,16 +73,16 @@ CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManag
     if(init==true){
       catalog_meta_=new CatalogMeta();
     }else {
-      Page *metapage=buffer_pool_manager_->FetchPage(META_PAGE_ID);
+      Page *metapage=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
       char *buffer=metapage->GetData();
       catalog_meta_=CatalogMeta::DeserializeFrom(buffer);
-      buffer_pool_manager_->UnpinPage(META_PAGE_ID,false);
+      buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID,false);
       for(auto it:catalog_meta_->table_meta_pages_){
         page_id_t table_page_id=it.second;
         Page *table_page=buffer_pool_manager_->FetchPage(table_page_id);
         char *buffer1=table_page->GetData();
         TableMetadata *tablemetadata;
-        TableMetadata::DeserializeFrom(buffer,tablemetadata);
+        TableMetadata::DeserializeFrom(buffer1,tablemetadata);
         TableHeap *heap=TableHeap::Create(buffer_pool_manager_,tablemetadata->GetFirstPageId(),tablemetadata->GetSchema(),log_manager_,lock_manager_);
         table_names_[tablemetadata->GetTableName()]=tablemetadata->GetTableId();
         TableInfo *info=TableInfo::Create();
@@ -94,8 +94,10 @@ CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManag
         page_id_t index_page_id=it.second;
         Page *index_page=buffer_pool_manager_->FetchPage(index_page_id);
         char *buffer2=index_page->GetData();
-        IndexMetadata *indexmeta;
-        IndexMetadata::DeserializeFrom(buffer,indexmeta);
+        IndexMetadata *indexmeta=nullptr;
+        
+        cout<<"Ctrate:"<<index_page_id<<endl;
+        IndexMetadata::DeserializeFrom(buffer2,indexmeta);
         std::string table_name=tables_[indexmeta->GetTableId()]->GetTableName();
         std::string index_name=indexmeta->GetIndexName();
         index_names_[table_name][index_name]=indexmeta->GetIndexId();
@@ -111,12 +113,14 @@ CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManag
 CatalogManager::~CatalogManager() {
   FlushCatalogMetaPage();
   delete catalog_meta_;
-  for (auto iter : tables_) {
+  /*
+   for (auto iter : tables_) {
     delete iter.second;
   }
   for (auto iter : indexes_) {
     delete iter.second;
   }
+  */
 }
 
 /**
@@ -153,7 +157,7 @@ dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schem
  */
 dberr_t CatalogManager::GetTable(const string &table_name, TableInfo *&table_info) {
   auto it=table_names_.find(table_name);
-  if(it==table_names_.end())return DB_NOT_EXIST;
+  if(it==table_names_.end())return DB_TABLE_NOT_EXIST;
   table_info=tables_[it->second];
   return DB_SUCCESS;
 }
@@ -197,6 +201,7 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   table_id_t table_id=table_names_[table_name];
   IndexMetadata *index_meta=IndexMetadata::Create(index_id,index_name,table_id,key_map);
   char *buffer =new_page_meta->GetData();
+  cout<<"save:"<<page_id<<endl;
   index_meta->SerializeTo(buffer);
 
   index_info=IndexInfo::Create();
