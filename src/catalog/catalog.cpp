@@ -205,6 +205,16 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   index_info=IndexInfo::Create();
   index_info->Init(index_meta,table_info,buffer_pool_manager_);
   indexes_.emplace(index_id,index_info);
+  
+  TableIterator table_it=table_info->GetTableHeap()->Begin(txn);
+  while(table_it!=table_info->GetTableHeap()->End()){
+    TableIterator it=table_it++;
+    Row row_=*it;
+    Row key_row;
+    row_.GetKeyFromRow(table_info->GetSchema(),index_info->GetIndexKeySchema(),key_row);
+    dberr_t message=index_info->GetIndex()->InsertEntry(key_row,row_.GetRowId(),txn);
+    if(message==DB_FAILED)return DB_FAILED;
+  }
   return DB_SUCCESS;
 }
 
