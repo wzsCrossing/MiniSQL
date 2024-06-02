@@ -17,12 +17,7 @@
 #include "planner/planner.h"
 #include "utils/utils.h"
 #include "parser/syntax_tree_printer.h"
-extern "C" {
-int yyparse(void);
-FILE *yyin;
-#include "parser/minisql_lex.h"
-#include "parser/parser.h"
-}
+
 
 ExecuteEngine::ExecuteEngine() {
   char path[] = "./databases";
@@ -322,7 +317,7 @@ dberr_t ExecuteEngine::ExecuteShowTables(pSyntaxNode ast, ExecuteContext *contex
     return DB_FAILED;
   }
   string table_in_db("Tables_in_" + current_db_);
-  uint max_width = table_in_db.length();
+  uint32_t max_width = table_in_db.length();
   for (const auto &itr : tables) {
     if (itr->GetTableName().length() > max_width) max_width = itr->GetTableName().length();
   }
@@ -488,7 +483,7 @@ dberr_t ExecuteEngine::ExecuteDropIndex(pSyntaxNode ast, ExecuteContext *context
   }
   if(!flag)return DB_INDEX_NOT_FOUND;
   
-  return dbs_[current_db_]->catalog_mgr_->DropIndex(table_name,inex_name);
+  return dbs_[current_db_]->catalog_mgr_->DropIndex(table_name,index_name);
 }
 
 dberr_t ExecuteEngine::ExecuteTrxBegin(pSyntaxNode ast, ExecuteContext *context) {
@@ -515,6 +510,11 @@ dberr_t ExecuteEngine::ExecuteTrxRollback(pSyntaxNode ast, ExecuteContext *conte
 /**
  * TODO: Student Implement
  */
+extern "C" {
+  int yyparse(void);
+#include "parser/minisql_lex.h"
+#include "parser/parser.h"
+}
 dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context) {
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteExecfile" << std::endl;
@@ -523,7 +523,7 @@ dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context)
   std::string file_name=(ast->child_->val_);
   fstream file;
   file.open(file_name);
-  char sql_[5001];
+  char sql_[1001];
   while(1){
     int sum=0;
     char tmp;

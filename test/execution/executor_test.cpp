@@ -13,14 +13,16 @@ TEST_F(ExecutorTest, SimpleSeqScanTest) {
   // Construct query plan
   TableInfo *table_info;
   GetExecutorContext()->GetCatalog()->GetTable("table-1", table_info);
+  puts("GG1");
   const Schema *schema = table_info->GetSchema();
+  puts("GG2");
   auto col_a = MakeColumnValueExpression(*schema, 0, "id");
+  puts("GG3");
   auto col_b = MakeColumnValueExpression(*schema, 0, "name");
   auto const500 = MakeConstantValueExpression(Field(kTypeInt, 500));
   auto predicate = MakeComparisonExpression(col_a, const500, "<");
   auto out_schema = MakeOutputSchema({{"id", col_a}, {"name", col_b}});
   auto plan = make_shared<SeqScanPlanNode>(out_schema, table_info->GetTableName(), predicate);
-  
   // Execute
   std::vector<Row> result_set{};
   GetExecutionEngine()->ExecutePlan(plan, &result_set, GetTxn(), GetExecutorContext());
