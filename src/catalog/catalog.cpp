@@ -224,7 +224,7 @@ dberr_t CatalogManager::GetIndex(const std::string &table_name, const std::strin
  * TODO: Student Implement
  */
 dberr_t CatalogManager::GetTableIndexes(const std::string &table_name, std::vector<IndexInfo *> &indexes) const {
-  if(table_names_.find(table_name)==table_names_.end())return DB_TABLE_NOT_EXIST;
+  if(index_names_.find(table_name)==index_names_.end())return DB_TABLE_NOT_EXIST;
   for(auto it:index_names_.at(table_name)){
     indexes.push_back(indexes_.at(it.second));
   }
