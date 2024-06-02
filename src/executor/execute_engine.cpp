@@ -42,8 +42,6 @@ ExecuteEngine::ExecuteEngine() {
 }
 std::unique_ptr<AbstractExecutor> ExecuteEngine::CreateExecutor(ExecuteContext *exec_ctx,
                                                                 const AbstractPlanNodeRef &plan) {
-  // puts("sbssd:");
-  // std::cout<<(plan->GetType()==PlanType::Update)<<std::endl;  
   switch (plan->GetType()) {
     // Create a new sequential scan executor
     case PlanType::SeqScan: {
@@ -82,7 +80,6 @@ dberr_t ExecuteEngine::ExecutePlan(const AbstractPlanNodeRef &plan, std::vector<
                                    ExecuteContext *exec_ctx) {
   // Construct the executor for the abstract plan node
   auto executor = CreateExecutor(exec_ctx, plan);
-
   try {
     executor->Init();
     RowId rid{};

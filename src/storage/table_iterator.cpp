@@ -11,7 +11,9 @@ TableIterator::TableIterator(TableHeap *table_heap, RowId rid, Txn *txn) {
 	this->row_id_ = rid;
 	this->txn_ = txn;
 	this->row_ = new Row(rid);
-	table_heap->GetTuple(this->row_, txn);
+	if (table_heap != nullptr) {
+		table_heap->GetTuple(this->row_, txn);
+	}
 }
 
 TableIterator::TableIterator(const TableIterator &other) {
