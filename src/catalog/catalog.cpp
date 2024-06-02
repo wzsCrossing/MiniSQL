@@ -139,7 +139,7 @@ dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schem
   TableHeap *new_heap=TableHeap::Create(buffer_pool_manager_,table_schema,txn,log_manager_,lock_manager_);
 
   page_id_t first_page=new_heap->GetFirstPageId();
-  TableMetadata *table_meta=TableMetadata::Create(new_table_id,table_name,first_page,schema);
+  TableMetadata *table_meta=TableMetadata::Create(new_table_id,table_name,first_page,table_schema);
   char *buffer=new_table_page_meta->GetData();
   table_meta->SerializeTo(buffer);
   buffer_pool_manager_->UnpinPage(new_page_id,true);

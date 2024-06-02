@@ -40,9 +40,10 @@ ExecuteEngine::ExecuteEngine() {
    **/
   closedir(dir);
 }
-
 std::unique_ptr<AbstractExecutor> ExecuteEngine::CreateExecutor(ExecuteContext *exec_ctx,
                                                                 const AbstractPlanNodeRef &plan) {
+  // puts("sbssd:");
+  // std::cout<<(plan->GetType()==PlanType::Update)<<std::endl;  
   switch (plan->GetType()) {
     // Create a new sequential scan executor
     case PlanType::SeqScan: {
