@@ -346,7 +346,7 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
   if(dbs_[current_db_]==nullptr)return DB_FAILED;
   TableInfo *new_info=TableInfo::Create();
   string table_name=string(ast->child_->val_);
-  cout<<"table_name"<<table_name<<endl;;
+  //cout<<"table_name:"<<table_name<<endl;;
   if(dbs_[current_db_]->catalog_mgr_->GetTable(table_name,new_info)==DB_SUCCESS){
     return DB_TABLE_ALREADY_EXIST;
   }
@@ -372,9 +372,17 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
     }
     else if(type=="char"){
       type_id=kTypeChar;
-      std::uint32_t leng;
-      
-      leng=(uint32_t)std::stoi(string(nw->next_->child_->val_));
+      std::uint32_t leng=0;
+      std::string predi= string(nw->next_->child_->val_);
+      bool flag=0;
+      for(int i=0;i<predi.size();i++){
+        if(!isdigit(predi[i])){flag=1;break;}
+        leng=(leng<<3)+(leng<<1)+predi[i]-'0';
+      }
+      if(flag){
+        std::cout<<"the length must be a positive integer number\n";
+        return DB_FAILED;
+      }
      // cout<<"leng:"<<leng<<endl;
       columns.push_back(new Column(col_name,type_id,leng,cnt++,false,uni_flag));
     }else return DB_FAILED;
@@ -386,6 +394,7 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
     pSyntaxNode ttk=st->child_;
     std::vector<std::string> index_keys;
     while(ttk!=nullptr&&ttk->type_==kNodeIdentifier){
+    //  cout<<"primary key_tuples:"<<string(ttk->val_)<<endl;
       index_keys.push_back(ttk->val_);
       ttk=ttk->next_;
     }
@@ -524,6 +533,7 @@ dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context)
   if(ast==nullptr||ast->child_==nullptr)return DB_FAILED;
   std::string file_name=(ast->child_->val_);
   fstream file;
+  //cout<<"file_name:"<<file_name<<endl;
   file.open(file_name);
   char sql_[1001];
   while(1){
