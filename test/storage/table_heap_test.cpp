@@ -111,6 +111,7 @@ TEST(TableHeapTest, TableHeapSampleTest) {
 
 TEST(TableHeapTest, TableIteratorTest) {
 	// init testing instance
+  remove(db_file_name.c_str());
 	auto disk_mgr_ = new DiskManager(db_file_name);
 	auto bpm_ = new BufferPoolManager(DEFAULT_BUFFER_POOL_SIZE, disk_mgr_);
 	const int row_nums = 10000;
@@ -159,5 +160,4 @@ TEST(TableHeapTest, TableIteratorTest) {
 	}
 	ASSERT_EQ(iter, table_heap->End());
 	delete disk_mgr_;
-  	remove(db_file_name.c_str());
 }
