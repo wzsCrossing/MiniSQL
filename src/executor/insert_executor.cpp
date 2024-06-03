@@ -25,7 +25,10 @@ bool InsertExecutor::Next([[maybe_unused]] Row *row, RowId *rid) {
           std::vector<RowId> result;
           if (!key_row.GetFields().empty() &&
               info->GetIndex()->ScanKey(key_row, result, exec_ctx_->GetTransaction()) == DB_SUCCESS) {
-              std::cout << "key already exists" << std::endl;
+              std::string index_name=info->GetIndexName();
+              if(index_name=="primary_index_")std::cout<<"primary key conflict"<<std::endl;
+              else if(index_name.find("unique_index")!=index_name.npos)std::cout<<"unique key conflict"<<std::endl;
+              else std::cout << "key already exists" << std::endl;
               return false;
           }
       }

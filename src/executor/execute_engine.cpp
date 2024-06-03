@@ -358,15 +358,16 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
   }
   pSyntaxNode st=ast->child_->next_->child_;
   std::vector<Column*> columns;
+  std::vector<std::string>uni_aux;
   int cnt=0;
   while(st!=nullptr&&st->type_==kNodeColumnDefinition){
     bool uni_flag=(st->val_==nullptr)?0:(string(st->val_)=="unique")?1:0;
-   // cout<<"flag?"<<uni_flag<<endl;
     pSyntaxNode nw=st->child_;
     string col_name=string(nw->val_);
    // cout<<"col_name:"<<col_name<<endl;
     string type=nw->next_->val_;
    // cout<<"type:"<<type<<endl;
+    if(uni_flag)uni_aux.push_back(col_name);
     TypeId type_id;
     if(type=="int"){
       type_id=kTypeInt;
@@ -389,13 +390,21 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
         std::cout<<"the length must be a positive integer number\n";
         return DB_FAILED;
       }
-     // cout<<"leng:"<<leng<<endl;
       columns.push_back(new Column(col_name,type_id,leng,cnt++,false,uni_flag));
+
     }else return DB_FAILED;
     st=st->next_;
   }
   Schema *schema=new Schema(columns);
   dbs_[current_db_]->catalog_mgr_->CreateTable(table_name,schema,nullptr,new_info);
+
+  for(std::string index_name:uni_aux){
+      std::vector<std::string>indexkeys;
+      IndexInfo * indexinfo;
+      indexkeys.push_back(index_name);
+      dbs_[current_db_]->catalog_mgr_->CreateIndex(table_name,index_name+"_unique_index",indexkeys,nullptr,indexinfo,"bptree");
+  }
+
   if(st!=nullptr&&st->type_==kNodeColumnList){
     pSyntaxNode ttk=st->child_;
     std::vector<std::string> index_keys;
@@ -406,7 +415,7 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
     }
     if(index_keys.size()==0){cout<<"no primary key\n";return DB_FAILED;}
     IndexInfo *index_info;
-    dberr_t message=dbs_[current_db_]->catalog_mgr_->CreateIndex(table_name,"primary_index",index_keys,nullptr,index_info,"bptree");
+    dberr_t message=dbs_[current_db_]->catalog_mgr_->CreateIndex(table_name,"primary_index_",index_keys,nullptr,index_info,"bptree");
     if(message!=DB_SUCCESS)return message;
   }
   return DB_SUCCESS;
@@ -470,7 +479,7 @@ dberr_t ExecuteEngine::ExecuteCreateIndex(pSyntaxNode ast, ExecuteContext *conte
   std::vector<std::string> index_keys;
   while(st!=nullptr&&st->type_==kNodeIdentifier){
     index_keys.push_back(string(st->val_));
-    st-st->next_;
+    st=st->next_;
   }
   IndexInfo * index_info;
   dberr_t message=dbs_[current_db_]->catalog_mgr_->CreateIndex(table_name,index_name,index_keys,nullptr,index_info,index_type);
