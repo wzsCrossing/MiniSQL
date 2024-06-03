@@ -346,6 +346,7 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
   if(dbs_[current_db_]==nullptr)return DB_FAILED;
   TableInfo *new_info=TableInfo::Create();
   string table_name=string(ast->child_->val_);
+  cout<<"table_name"<<table_name<<endl;;
   if(dbs_[current_db_]->catalog_mgr_->GetTable(table_name,new_info)==DB_SUCCESS){
     return DB_TABLE_ALREADY_EXIST;
   }
@@ -354,9 +355,12 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
   int cnt=0;
   while(st!=nullptr&&st->type_==kNodeColumnDefinition){
     bool uni_flag=(st->val_==nullptr)?0:(string(st->val_)=="unique")?1:0;
+    cout<<"flag?"<<uni_flag<<endl;
     pSyntaxNode nw=st->child_;
     string col_name=string(nw->val_);
+    cout<<"col_name:"<<col_name<<endl;
     string type=nw->next_->val_;
+    cout<<"type:"<<type<<endl;
     TypeId type_id;
     if(type=="int"){
       type_id=kTypeInt;
@@ -370,11 +374,11 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
       type_id=kTypeChar;
       std::uint32_t leng;
       
-      leng=(uint32_t)std::stoi(string(st->next_->child_->val_));
-
+      leng=(uint32_t)std::stoi(string(nw->next_->child_->val_));
+      cout<<"leng:"<<leng<<endl;
       columns.push_back(new Column(col_name,type_id,leng,cnt++,false,uni_flag));
     }else return DB_FAILED;
-    nw=nw->next_;
+    st=st->next_;
   }
   Schema *schema=new Schema(columns);
   dbs_[current_db_]->catalog_mgr_->CreateTable(table_name,schema,nullptr,new_info);
