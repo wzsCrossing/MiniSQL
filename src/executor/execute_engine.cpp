@@ -535,16 +535,22 @@ dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context)
   fstream file;
   //cout<<"file_name:"<<file_name<<endl;
   file.open(file_name);
+  if(!file.is_open()){
+    std::cout<<"file not exists\n";
+    return DB_FAILED;
+  }
   char sql_[1001];
   while(1){
     int sum=0;
     char tmp;
     while((tmp=file.get())!=';'){
+      if(tmp=='\n'||tmp=='\r')continue;
       if(file.eof())return DB_SUCCESS;
       if(sum>=5000)return DB_FAILED;
       sql_[sum++]=tmp;
     }
     sql_[sum]=tmp;
+    sql_[sum+1]='\0';
     YY_BUFFER_STATE bp = yy_scan_string(sql_);
     if (bp == nullptr) {
       std::cout << "Failed to create yy buffer state." << std::endl;
