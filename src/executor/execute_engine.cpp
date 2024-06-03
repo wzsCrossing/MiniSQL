@@ -355,12 +355,12 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
   int cnt=0;
   while(st!=nullptr&&st->type_==kNodeColumnDefinition){
     bool uni_flag=(st->val_==nullptr)?0:(string(st->val_)=="unique")?1:0;
-    cout<<"flag?"<<uni_flag<<endl;
+   // cout<<"flag?"<<uni_flag<<endl;
     pSyntaxNode nw=st->child_;
     string col_name=string(nw->val_);
-    cout<<"col_name:"<<col_name<<endl;
+   // cout<<"col_name:"<<col_name<<endl;
     string type=nw->next_->val_;
-    cout<<"type:"<<type<<endl;
+   // cout<<"type:"<<type<<endl;
     TypeId type_id;
     if(type=="int"){
       type_id=kTypeInt;
@@ -375,7 +375,7 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
       std::uint32_t leng;
       
       leng=(uint32_t)std::stoi(string(nw->next_->child_->val_));
-      cout<<"leng:"<<leng<<endl;
+     // cout<<"leng:"<<leng<<endl;
       columns.push_back(new Column(col_name,type_id,leng,cnt++,false,uni_flag));
     }else return DB_FAILED;
     st=st->next_;
