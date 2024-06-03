@@ -133,8 +133,14 @@ dberr_t ExecuteEngine::Execute(pSyntaxNode ast) {
       return ExecuteTrxCommit(ast, context.get());
     case kNodeTrxRollback:
       return ExecuteTrxRollback(ast, context.get());
-    case kNodeExecFile:
-      return ExecuteExecfile(ast, context.get());
+    case kNodeExecFile: {
+      auto dberr = ExecuteExecfile(ast, context.get());
+      auto stop_time = std::chrono::system_clock::now();
+      double duration_time =
+          double((std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time)).count());
+      std::cout << "(total time: " << fixed << setprecision(4) << duration_time / 1000 << " sec)" << std::endl;
+      return dberr;
+    }
     case kNodeQuit:
       return ExecuteQuit(ast, context.get());
     default:
