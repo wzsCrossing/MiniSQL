@@ -58,7 +58,6 @@ TEST_F(RecoveryManagerTest, RecoveryTest) {
     recovery_mgr.AppendLogRec(log);
   }
   auto &db = recovery_mgr.GetDatabase();
-
   recovery_mgr.RedoPhase();
   ASSERT_EQ(db["A"], 2000);
   ASSERT_EQ(db["B"], 1000);

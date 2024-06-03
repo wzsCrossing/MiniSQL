@@ -25,18 +25,61 @@ public:
     /**
     * TODO: Student Implement
     */
-    void Init(CheckPoint &last_checkpoint) {}
+    void Init(CheckPoint &last_checkpoint) {
+        persist_lsn_=last_checkpoint.checkpoint_lsn_;
+        active_txns_=std::move(last_checkpoint.active_txns_);
+        data_=std::move(last_checkpoint.persist_data_);
+    }
 
     /**
     * TODO: Student Implement
     */
-    void RedoPhase() {}
+    void RedoPhase() {
+        for(auto it:log_recs_){
+            if(it.first<persist_lsn_)continue;
+            LogRecPtr log=it.second;
+            active_txns_[log->txn_id]=it.first;
+            if(log->type_==LogRecType::kInsert){
+                data_.emplace(log->inskey,log->insval);
+            }else if(log->type_==LogRecType::kDelete){
+                data_.erase(log->delkey);
+            }else if(log->type_==LogRecType::kUpdate){
+                data_.erase(log->uptoldkey);
+                data_.emplace(log->uptnewkey,log->uptnewval);
+            }else if(log->type_==LogRecType::kCommit){
+                active_txns_.erase(log->txn_id);
+            }else if(log->type_==LogRecType::kAbort){
+                Rollback(log->txn_id);
+                active_txns_.erase(log->txn_id);
+            }
+        }
+    }
 
     /**
     * TODO: Student Implement
     */
-    void UndoPhase() {}
-
+    void UndoPhase() {
+        for(auto it:active_txns_){
+            Rollback(it.first);
+        }
+        active_txns_.clear();
+    }
+    void Rollback(txn_id_t txn_id){
+        auto log_id=active_txns_[txn_id];
+        while(log_id!=INVALID_LSN){
+            LogRecPtr log=log_recs_[log_id];
+            if(log==nullptr)break;
+            if(log->type_==LogRecType::kInsert){
+                data_.erase(log->inskey);
+            }else if(log->type_==LogRecType::kDelete){
+                data_.emplace(log->delkey,log->delval);
+            }else if(log->type_==LogRecType::kUpdate){
+                data_.erase(log->uptnewkey);
+                data_.emplace(log->uptoldkey,log->uptoldval);
+            }
+            log_id=log->prev_lsn_;
+        }
+    }
     // used for test only
     void AppendLogRec(LogRecPtr log_rec) { log_recs_.emplace(log_rec->lsn_, log_rec); }
 
