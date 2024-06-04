@@ -40,8 +40,8 @@ class LRUReplacer : public Replacer {
 private:
   // add your own private member variables here
   uint32_t page_capacity_;
-  deque<frame_id_t> page_list_;
-  map<frame_id_t, bool> page_map_;
+  list<frame_id_t> page_list_;
+  map<frame_id_t, list<frame_id_t> :: iterator> page_map_;
 };
 
 #endif  // MINISQL_LRU_REPLACER_H
