@@ -137,8 +137,8 @@ dberr_t ExecuteEngine::Execute(pSyntaxNode ast) {
       auto dberr = ExecuteExecfile(ast, context.get());
       auto stop_time = std::chrono::system_clock::now();
       double duration_time =
-          double((std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time)).count());
-      std::cout << "(total time: " << fixed << setprecision(4) << duration_time / 1000 << " sec)" << std::endl;
+          double((std::chrono::duration_cast<std::chrono::microseconds>(stop_time - start_time)).count());
+      std::cout << "(total time: " << fixed << setprecision(4) << duration_time / 1000000 << " sec)" << std::endl;
       return dberr;
     }
     case kNodeQuit:
@@ -159,7 +159,7 @@ dberr_t ExecuteEngine::Execute(pSyntaxNode ast) {
   }
   auto stop_time = std::chrono::system_clock::now();
   double duration_time =
-      double((std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time)).count());
+      double((std::chrono::duration_cast<std::chrono::microseconds>(stop_time - start_time)).count());
   // Return the result set as string.
   std::stringstream ss;
   ResultWriter writer(ss);
