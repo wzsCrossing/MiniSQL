@@ -5,8 +5,6 @@
 #include <mutex>
 #include <unordered_set>
 #include <vector>
-#include <deque>
-#include <map>
 
 #include "buffer/replacer.h"
 #include "common/config.h"
@@ -41,7 +39,7 @@ private:
   // add your own private member variables here
   uint32_t page_capacity_;
   list<frame_id_t> page_list_;
-  map<frame_id_t, list<frame_id_t> :: iterator> page_map_;
+  vector<list<frame_id_t> :: iterator> page_iter_;
 };
 
 #endif  // MINISQL_LRU_REPLACER_H
