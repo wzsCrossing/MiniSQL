@@ -443,13 +443,38 @@ dberr_t ExecuteEngine::ExecuteShowIndexes(pSyntaxNode ast, ExecuteContext *conte
 #endif
   std::vector<TableInfo*>tables;
   dbs_[current_db_]->catalog_mgr_->GetTables(tables);
+  std::vector<pair<string,string> > gather;
   for(auto it:tables){
     std::vector<IndexInfo*>indexes;
     dbs_[current_db_]->catalog_mgr_->GetTableIndexes(it->GetTableName(),indexes);
     for(auto index:indexes){
-      std::cout<<"table_name:"<<it->GetTableName()<<",index_name:"<<index->GetIndexName()<<"\n";
+     // std::cout<<"table_name:"<<it->GetTableName()<<",index_name:"<<index->GetIndexName()<<"\n";
+      gather.push_back(std::make_pair(it->GetTableName(),index->GetIndexName()));
     }
   }
+  
+  string table_n="table_name",index_n="index_name";
+  uint32_t wid1=table_n.length(),wid2=index_n.length();
+  for(auto it:gather){
+    if(it.first.length()>wid1)wid1=it.first.length();
+    if(it.second.length()>wid2)wid2=it.second.length();
+  }
+  cout << "+" << setfill('-') << setw(wid1 + 2) << ""
+       << "+" << setfill('-') << setw(wid2+2)<<""
+       <<"+"<<endl;
+  cout << "| " << std::left << setfill(' ') << setw(wid1) << table_n << " | " 
+       << std::left<<setfill(' ')<<setw(wid2)<<index_n<<" |"<<endl;
+  cout << "+" << setfill('-') << setw(wid1 + 2) << ""
+       << "+" << setfill('-') << setw(wid2+2)<<""
+       <<"+"<<endl;
+  for (auto it : gather) {
+    cout << "| " << std::left << setfill(' ') << setw(wid1) << it.first << " | "
+    <<std::left<<setfill(' ')<<setw(wid2)<<it.second<<" |"<<endl;
+  }
+  cout << "+" << setfill('-') << setw(wid1 + 2) << ""
+       << "+" << setfill('-') << setw(wid2+2)<<""
+       <<"+"<<endl;
+  
   return DB_SUCCESS;
 }
 
