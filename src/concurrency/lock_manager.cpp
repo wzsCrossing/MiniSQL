@@ -127,8 +127,7 @@ void LockManager::LockPrepare(Txn *txn, const RowId &rid) {
         txn->SetState(TxnState::kAborted);
         throw TxnAbortException(txn->GetTxnId(),AbortReason::kLockOnShrinking);
     }
-    LockRequestQueue tmp;
-    if(lock_table_.find(rid)!=lock_table_.end())lock_table_.emplace(rid,tmp);
+    if(lock_table_.find(rid)!=lock_table_.end())lock_table_.emplace(std::piecewise_construct,std::forward_as_tuple(rid),std::forward_as_tuple());
 }
 
 /**
@@ -158,18 +157,39 @@ void LockManager::RemoveEdge(txn_id_t t1, txn_id_t t2) {
 /**
  * TODO: Student Implement
  */
-bool LockManager::HasCycle(txn_id_t &newest_tid_in_cycle) {
-    if(visited_set_.find(newest_tid_in_cycle)!=visited_set_.end()){
-        revisited_node_=newest_tid_in_cycle;
+bool LockManager::dfs(txn_id_t nw){
+    if(visited_set_.find(nw)!=visited_set_.end()){
+        revisited_node_=nw;
         return true;
     }
-    visited_path_.push(newest_tid_in_cycle);
-    visited_set_.insert(newest_tid_in_cycle);
-    for(auto to:waits_for_[newest_tid_in_cycle]){
-        if(HasCycle(to))return true;
+    visited_path_.push(nw);
+    visited_set_.insert(nw);
+    for(auto to:waits_for_[nw]){
+        if(dfs(to))return true;
     }
     visited_path_.pop();
-    visited_set_.erase(newest_tid_in_cycle);
+    visited_set_.erase(nw);
+    return false;
+}
+bool LockManager::HasCycle(txn_id_t &newest_tid_in_cycle) {
+    std::set<txn_id_t>all_pts;
+    for(auto it:waits_for_){
+        all_pts.insert(it.first);
+        for(auto to:it.second)all_pts.insert(to);
+    }
+    while(!visited_path_.empty())visited_path_.pop();
+    visited_set_.clear();
+    for(auto st:all_pts){
+        if(dfs(st)){
+            newest_tid_in_cycle=revisited_node_;
+            while(!visited_path_.empty()&&revisited_node_!=visited_path_.top()){
+                newest_tid_in_cycle=std::max(newest_tid_in_cycle,visited_path_.top());
+                visited_path_.pop();
+            }
+            return true;
+        }
+    }
+    return false;
 
 }
 
@@ -213,27 +233,8 @@ void LockManager::RunCycleDetection() {
                 }
             }
         }
-
-        while(1){
-            std::set<txn_id_t>all_pts;
-            for(auto it:waits_for_){
-                all_pts.insert(it.first);
-                for(auto to:it.second)all_pts.insert(to);
-            }
-            int del_pt=-1;
-            for(auto st:all_pts){
-                while(!visited_path_.empty())visited_path_.pop();
-                visited_set_.clear();
-                if(HasCycle(st)){
-                    del_pt=revisited_node_;
-                    while(!visited_path_.empty()&&revisited_node_!=visited_path_.top()){
-                        del_pt=std::max(del_pt,visited_path_.top());
-                        visited_path_.pop();
-                    }
-                    break;
-                }
-            }
-            if(del_pt==-1)break;
+        txn_id_t del_pt=INVALID_TXN_ID;
+        while(HasCycle(del_pt)){
             DeleteNode(del_pt);
             auto *txn=txn_mgr_->GetTransaction(del_pt);
             txn->SetState(TxnState::kAborted);
