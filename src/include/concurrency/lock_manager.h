@@ -153,6 +153,7 @@ public:
 
     /** Runs cycle detection in the background. */
     void RunCycleDetection();
+    bool dfs(txn_id_t nw);
 
     /*
      * return the set of all edges in the graph, used for testing only!
